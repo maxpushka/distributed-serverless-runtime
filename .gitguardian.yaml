@@ -1,0 +1,5 @@
+version: 2
+
+secret:
+  ignore_paths:
+    - ".env.example"
