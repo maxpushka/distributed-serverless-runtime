@@ -50,6 +50,6 @@ func Start(conf *config.Config) error {
 		return err
 	}
 
-	err = database.Close(db)
+	err = database.Disconnect(db)
 	return err
 }

@@ -9,7 +9,7 @@ import (
 
 type Config struct {
 	// Auth Config
-	AuthJWTKey     string
+	AuthJWTKey     []byte
 	AuthJWTExpires time.Duration
 	// Server Config
 	ServerPort string
@@ -37,7 +37,7 @@ func New() (*Config, error) {
 		return nil, err
 	}
 	return &Config{
-		AuthJWTKey:     os.Getenv("AUTH_JWT_KEY"),
+		AuthJWTKey:     []byte(os.Getenv("AUTH_JWT_KEY")),
 		AuthJWTExpires: expiresDuration,
 		ServerPort:     os.Getenv("SERVER_PORT"),
 		dbHost:         os.Getenv("DB_HOST"),

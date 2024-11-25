@@ -22,11 +22,26 @@ func Connect(conf *config.Config) (*sql.DB, error) {
 }
 
 func Initialize(db *sql.DB) error {
-	// TODO(Vlad): Create users and configs table here
-	return nil
+	initialization := `
+		CREATE TABLE IF NOT EXISTS users (
+			id SERIAL PRIMARY KEY,
+			username TEXT UNIQUE,
+			password TEXT
+		);
+		CREATE TABLE IF NOT EXISTS configs (
+			id SERIAL PRIMARY KEY,
+			user_id INTEGER REFERENCES users(id),
+			config TEXT
+		);
+	`
+	_, err := db.Exec(initialization)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return err
 }
 
-func Close(db *sql.DB) error {
+func Disconnect(db *sql.DB) error {
 	err := db.Close()
 	if err != nil {
 		log.Fatal(err)

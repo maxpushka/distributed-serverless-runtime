@@ -1,4 +1,4 @@
-package auth
+package schema
 
 import "github.com/golang-jwt/jwt"
 
