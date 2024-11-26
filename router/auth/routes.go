@@ -41,7 +41,7 @@ func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Reque
 
 	// Create JWT token
 	issuedAt := time.Now()
-	expirationTime := issuedAt.Add(conf.AuthJWTExpires)
+	expirationTime := issuedAt.Add(conf.Auth.JWTExpires)
 	claims := &schema.Claims{
 		Username: creds.Username,
 		StandardClaims: jwt.StandardClaims{
@@ -51,7 +51,7 @@ func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Reque
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, err := token.SignedString(conf.AuthJWTKey)
+	tokenStr, err := token.SignedString(conf.Auth.JWTKey)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		encoder.Encode(schema.Response{Error: "Failed to create token"})

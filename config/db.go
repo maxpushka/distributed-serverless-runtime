@@ -30,6 +30,6 @@ func DbConfigFromEnv() (*DbConfig, error) {
 	}, nil
 }
 
-func (c DbConfig) DbUrl() string {
+func (c DbConfig) ConnectionString() string {
 	return "host=" + c.Host + " port=" + c.Port + " user=" + c.User + " password=" + c.Password + " dbname=" + c.Name + " sslmode=disable"
 }
