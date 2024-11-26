@@ -3,11 +3,13 @@ package auth
 import (
 	"context"
 	"encoding/json"
-	"github.com/golang-jwt/jwt"
 	"net/http"
+	"strings"
+
+	"github.com/golang-jwt/jwt"
+
 	"serverless/config"
 	"serverless/router/schema"
-	"strings"
 )
 
 func Middleware(conf *config.Config) func(handler http.Handler) http.Handler {

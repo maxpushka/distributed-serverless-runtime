@@ -2,8 +2,10 @@ package database
 
 import (
 	"database/sql"
-	_ "github.com/lib/pq"
 	"log"
+	
+	_ "github.com/lib/pq"
+
 	"serverless/config"
 )
 
