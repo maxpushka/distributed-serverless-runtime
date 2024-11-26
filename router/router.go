@@ -44,7 +44,7 @@ func Start(conf *config.Config) error {
 	api.Use(auth.Middleware(conf))
 
 	fmt.Printf("Starting server on port %s\n", conf.ServerPort)
-	err = http.ListenAndServe(":"+conf.ServerPort, r)
+	err = http.ListenAndServe("0.0.0.0:"+conf.ServerPort, r)
 	if err != nil {
 		log.Fatal(err)
 		return err
