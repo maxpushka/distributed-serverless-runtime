@@ -3,12 +3,14 @@ package auth
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/golang-jwt/jwt"
 	"net/http"
+	"time"
+
+	"github.com/golang-jwt/jwt"
+
 	"serverless/config"
 	"serverless/router/database"
 	"serverless/router/schema"
-	"time"
 )
 
 func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Request) {
@@ -32,8 +34,8 @@ func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Reque
 	}
 
 	// Check user credentials
-	dbPassword, err := database.GetUserPassword(db, creds)
-	if err != nil || dbPassword != creds.Password {
+	err = database.GetUserPassword(db, creds)
+	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		encoder.Encode(schema.Response{Error: "Invalid credentials"})
 		return

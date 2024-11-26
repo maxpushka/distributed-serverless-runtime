@@ -1,22 +1,15 @@
 package router
 
 import (
-	//"context"
-	//"database/sql"
-	//"encoding/json"
 	"fmt"
-	//"io"
 	"log"
 	"net/http"
-	//"os"
-	"serverless/router/database"
-	//"strings"
-	//"time"
 
 	"github.com/gorilla/mux"
 
 	"serverless/config"
 	"serverless/router/auth"
+	"serverless/router/database"
 )
 
 func Start(conf *config.Config) error {
