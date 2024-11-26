@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"time"
 
 	"serverless/cdn"
 	"serverless/executor"
@@ -17,8 +18,8 @@ type Executor struct {
 	runners *ttlcache.Cache[string, *executor.Runner[*goja.Runtime]]
 }
 
-func NewExecutor(source cdn.Query) *Executor {
-	runtimes := ttlcache.New(ttlcache.WithTTL[string, *executor.Runner[*goja.Runtime]](executor.HotDuration))
+func NewExecutor(hot time.Duration, source cdn.Query) *Executor {
+	runtimes := ttlcache.New(ttlcache.WithTTL[string, *executor.Runner[*goja.Runtime]](hot))
 	go runtimes.Start() // starts automatic expired item deletion
 
 	return &Executor{
@@ -27,15 +28,7 @@ func NewExecutor(source cdn.Query) *Executor {
 	}
 }
 
-func (exec *Executor) Execute(id string, req executor.Request) (executor.Response, error) {
-	// TODO:
-	// 1. Get or create runtime, load the script.
-	//    For a given user runtime may be:
-	//      - hot in cache with the script already loaded
-	//      - cold, need to fetch the script
-	// 2. Execute the script
-	// 3. Return the formatted response
-
+func (exec *Executor) Execute(id string, cfg map[string]string, req executor.Request) (executor.Response, error) {
 	sum, err := exec.source.Checksum(id)
 	if err != nil {
 		return executor.Response{}, err
@@ -48,25 +41,37 @@ func (exec *Executor) Execute(id string, req executor.Request) (executor.Respons
 	runner.Mu.RLock()
 	defer runner.Mu.RUnlock()
 	if !ok || sum != runner.Checksum { // script was updated, need to reload
+		runner.Mu.RUnlock() // unlock before acquiring write lock
 		if err := exec.setupRunner(runner, sum, id); err != nil {
 			return executor.Response{}, err
 		}
+		runner.Mu.RLock() // relock for reading
 	}
 
-	// Execute the script
-	request, err := json.Marshal(req)
+	// Marshal request
+	reqJSON, err := json.Marshal(req)
 	if err != nil {
 		return executor.Response{}, err
 	}
-	output, err := runner.Runtime.RunString(fmt.Sprintf("handle(%s)", request))
+	cfgJSON, err := json.Marshal(cfg)
+	if err != nil {
+		return executor.Response{}, err
+	}
+
+	// Execute the script
+	outputObject, err := runner.Runtime.RunString(fmt.Sprintf("handle(%s, %s)", reqJSON, cfgJSON))
 	if err != nil {
 		return executor.Response{}, err
 	}
 
 	// Convert output to executor.Response
 	var response executor.Response
-	outputStr := output.String()
-	if err := json.Unmarshal([]byte(outputStr), &response); err != nil {
+	outputMap := outputObject.Export()
+	outputBytes, err := json.Marshal(outputMap)
+	if err != nil {
+		return executor.Response{}, err
+	}
+	if err := json.Unmarshal(outputBytes, &response); err != nil {
 		return executor.Response{}, fmt.Errorf("failed to unmarshal handler response: %w", err)
 	}
 

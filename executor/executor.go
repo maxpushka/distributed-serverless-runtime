@@ -2,26 +2,23 @@ package executor
 
 import (
 	"sync"
-	"time"
 )
 
-const HotDuration = 30 * time.Minute
-
 type Executor interface {
-	Execute(id string, req Request) (Response, error)
+	Execute(id string, cfg map[string]string, req Request) (Response, error)
 }
 
 type Request struct {
-	Method  string              `json:"method"`
-	URL     string              `json:"url"`
-	Headers map[string][]string `json:"headers"`
-	Body    []byte              `json:"body,omitempty"`
+	Method  string            `json:"method"`
+	URL     string            `json:"url"`
+	Headers map[string]string `json:"headers"`
+	Body    any               `json:"body,omitempty"`
 }
 
 type Response struct {
-	StatusCode int
-	Headers    map[string][]string
-	Body       []byte
+	StatusCode int               `json:"status_code,omitempty"`
+	Headers    map[string]string `json:"headers,omitempty"`
+	Body       string            `json:"body,omitempty"`
 }
 
 type PythonExecutor struct {
