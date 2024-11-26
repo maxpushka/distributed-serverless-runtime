@@ -1,22 +1,15 @@
 package router
 
 import (
-	//"context"
-	//"database/sql"
-	//"encoding/json"
 	"fmt"
-	//"io"
 	"log"
 	"net/http"
-	//"os"
-	"serverless/router/database"
-	//"strings"
-	//"time"
 
 	"github.com/gorilla/mux"
 
 	"serverless/config"
 	"serverless/router/auth"
+	"serverless/router/database"
 )
 
 func Start(conf *config.Config) error {
@@ -43,8 +36,8 @@ func Start(conf *config.Config) error {
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(auth.Middleware(conf))
 
-	fmt.Printf("Starting server on port %s\n", conf.ServerPort)
-	err = http.ListenAndServe(":"+conf.ServerPort, r)
+	fmt.Printf("Starting server on %s\n", conf.Server.ConnectionString())
+	err = http.ListenAndServe(conf.Server.ConnectionString(), r)
 	if err != nil {
 		log.Fatal(err)
 		return err

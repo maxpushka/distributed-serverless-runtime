@@ -3,11 +3,13 @@ package auth
 import (
 	"context"
 	"encoding/json"
-	"github.com/golang-jwt/jwt"
 	"net/http"
+	"strings"
+
+	"github.com/golang-jwt/jwt"
+
 	"serverless/config"
 	"serverless/router/schema"
-	"strings"
 )
 
 func Middleware(conf *config.Config) func(handler http.Handler) http.Handler {
@@ -28,7 +30,7 @@ func Middleware(conf *config.Config) func(handler http.Handler) http.Handler {
 			claims := &schema.Claims{}
 
 			token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-				return conf.AuthJWTKey, nil
+				return conf.Auth.JWTKey, nil
 			})
 
 			if err != nil || !token.Valid {

@@ -3,12 +3,14 @@ package auth
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/golang-jwt/jwt"
 	"net/http"
+	"time"
+
+	"github.com/golang-jwt/jwt"
+
 	"serverless/config"
 	"serverless/router/database"
 	"serverless/router/schema"
-	"time"
 )
 
 func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Request) {
@@ -32,8 +34,8 @@ func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Reque
 	}
 
 	// Check user credentials
-	dbPassword, err := database.GetUserPassword(db, creds)
-	if err != nil || dbPassword != creds.Password {
+	err = database.GetUserPassword(db, creds)
+	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		encoder.Encode(schema.Response{Error: "Invalid credentials"})
 		return
@@ -41,7 +43,7 @@ func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Reque
 
 	// Create JWT token
 	issuedAt := time.Now()
-	expirationTime := issuedAt.Add(conf.AuthJWTExpires)
+	expirationTime := issuedAt.Add(conf.Auth.JWTExpires)
 	claims := &schema.Claims{
 		Username: creds.Username,
 		StandardClaims: jwt.StandardClaims{
@@ -51,7 +53,7 @@ func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Reque
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, err := token.SignedString(conf.AuthJWTKey)
+	tokenStr, err := token.SignedString(conf.Auth.JWTKey)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		encoder.Encode(schema.Response{Error: "Failed to create token"})
