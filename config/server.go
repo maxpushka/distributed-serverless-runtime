@@ -21,3 +21,7 @@ func ServerConfigFromEnv() (*ServerConfig, error) {
 		Port: port,
 	}, nil
 }
+
+func (c ServerConfig) ConnectionString() string {
+	return c.Host + ":" + c.Port
+}

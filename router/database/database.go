@@ -8,7 +8,7 @@ import (
 )
 
 func Connect(conf *config.Config) (*sql.DB, error) {
-	db, errOpen := sql.Open("postgres", conf.DbUrl())
+	db, errOpen := sql.Open("postgres", conf.Db.ConnectionString())
 	if errOpen != nil {
 		log.Fatal(errOpen)
 		return db, errOpen

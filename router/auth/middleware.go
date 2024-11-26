@@ -28,7 +28,7 @@ func Middleware(conf *config.Config) func(handler http.Handler) http.Handler {
 			claims := &schema.Claims{}
 
 			token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-				return conf.AuthJWTKey, nil
+				return conf.Auth.JWTKey, nil
 			})
 
 			if err != nil || !token.Valid {
