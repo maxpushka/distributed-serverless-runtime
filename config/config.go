@@ -1,10 +1,11 @@
 package config
 
 import (
-	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -13,6 +14,9 @@ type Config struct {
 	AuthJWTExpires time.Duration
 	// Server Config
 	ServerPort string
+	// HotDuration specifies the duration
+	// for which a runner is kept hot after loading a script.
+	HotDuration time.Duration
 	// DB Config
 	dbHost string
 	dbPort string
@@ -36,10 +40,22 @@ func New() (*Config, error) {
 		log.Fatal(err)
 		return nil, err
 	}
+
+	hot := os.Getenv("HOT_DURATION")
+	if hot == "" {
+		hot = "30m"
+	}
+	hotDuration, err := time.ParseDuration(hot)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
 	return &Config{
 		AuthJWTKey:     []byte(os.Getenv("AUTH_JWT_KEY")),
 		AuthJWTExpires: expiresDuration,
 		ServerPort:     os.Getenv("SERVER_PORT"),
+		HotDuration:    hotDuration,
 		dbHost:         os.Getenv("DB_HOST"),
 		dbPort:         os.Getenv("DB_PORT"),
 		dbUser:         os.Getenv("DB_USER"),
