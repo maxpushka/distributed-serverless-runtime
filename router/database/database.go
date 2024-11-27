@@ -31,6 +31,8 @@ func Initialize(db *sql.DB) {
 		CREATE TABLE IF NOT EXISTS routes (
 			id SERIAL PRIMARY KEY,
 			name TEXT,
+			config_exists BOOLEAN DEFAULT FALSE,
+			executable_exists BOOLEAN DEFAULT FALSE,
 			user_id INTEGER REFERENCES users(id)
 		);
 	`

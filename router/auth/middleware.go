@@ -2,8 +2,10 @@ package auth
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"net/http"
+	"serverless/router/database/crud"
 	"strings"
 
 	"github.com/golang-jwt/jwt"
@@ -12,7 +14,7 @@ import (
 	"serverless/router/schema"
 )
 
-func Middleware(conf *config.Config) func(handler http.Handler) http.Handler {
+func Middleware(db *sql.DB, conf *config.Config) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
@@ -39,7 +41,15 @@ func Middleware(conf *config.Config) func(handler http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), "user", claims.ToUser())
+			user := claims.ToUser()
+			_, err = crud.GetUser(db, schema.CredentialsFromUser(user))
+			if err != nil {
+				w.WriteHeader(http.StatusUnauthorized)
+				encoder.Encode(schema.Response{Error: "Invalid token"})
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), "user", user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

@@ -2,7 +2,6 @@ package crud
 
 import (
 	"database/sql"
-	"errors"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"serverless/router/schema"
@@ -18,6 +17,21 @@ func SaveUser(db *sql.DB, creds schema.Credentials) error {
 	return err
 }
 
+func CheckUserPassword(db *sql.DB, creds schema.Credentials) bool {
+	var dbHashedPassword string
+	err := db.QueryRow("SELECT password FROM users WHERE username = $1", creds.Username).Scan(&dbHashedPassword)
+	if err != nil {
+		log.Print(err)
+		return false
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(dbHashedPassword), []byte(creds.Password))
+	if err != nil {
+		log.Print(err)
+		return false
+	}
+	return true
+}
+
 func GetUser(db *sql.DB, creds schema.Credentials) (schema.User, error) {
 	var id int
 	var username string
@@ -30,10 +44,6 @@ func GetUser(db *sql.DB, creds schema.Credentials) (schema.User, error) {
 	if err != nil {
 		log.Print(err)
 		return schema.User{}, err
-	}
-	err = bcrypt.CompareHashAndPassword([]byte(dbHashedPassword), []byte(creds.Password))
-	if err != nil {
-		return schema.User{}, errors.New("Invalid credentials")
 	}
 	return schema.User{
 		UserId:   id,

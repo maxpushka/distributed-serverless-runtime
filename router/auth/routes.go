@@ -34,14 +34,20 @@ func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Reque
 	}
 
 	// Check user credentials
-	user, err := crud.GetUser(db, creds)
-	if err != nil {
+	passwordIsValid := crud.CheckUserPassword(db, creds)
+	if !passwordIsValid {
 		w.WriteHeader(http.StatusUnauthorized)
 		encoder.Encode(schema.Response{Error: "Invalid credentials"})
 		return
 	}
 
 	// Create JWT token
+	user, err := crud.GetUser(db, creds)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		encoder.Encode(schema.Response{Error: "Failed to fetch user"})
+		return
+	}
 	issuedAt := time.Now()
 	expirationTime := issuedAt.Add(conf.Auth.JWTExpires)
 	claims := user.ToClaims(jwt.StandardClaims{

@@ -21,7 +21,10 @@ func SaveRoute(db *sql.DB, user schema.User, route schema.RouteName) (*schema.Ro
 }
 
 func GetRoutes(db *sql.DB, user schema.User) ([]schema.Route, error) {
-	rows, err := db.Query("SELECT id, name FROM routes WHERE user_id = $1", user.UserId)
+	rows, err := db.Query(
+		"SELECT id, name, config_exists, executable_exists FROM routes WHERE user_id = $1",
+		user.UserId,
+	)
 	if err != nil {
 		log.Print(err)
 		return nil, err
@@ -32,12 +35,68 @@ func GetRoutes(db *sql.DB, user schema.User) ([]schema.Route, error) {
 	for rows.Next() {
 		var id int
 		var name string
-		err := rows.Scan(&id, &name)
+		var configExists bool
+		var executableExists bool
+		err := rows.Scan(&id, &name, &configExists, &executableExists)
 		if err != nil {
 			log.Print(err)
 			return nil, err
 		}
-		routes = append(routes, schema.Route{Id: id, Name: name})
+		routes = append(routes, schema.Route{
+			Id:               id,
+			Name:             name,
+			ConfigExists:     configExists,
+			ExecutableExists: executableExists,
+		})
 	}
 	return routes, nil
+}
+
+func GetRoute(db *sql.DB, user schema.User, routeId int) (*schema.Route, error) {
+	var id int
+	var name string
+	var configExists bool
+	var executableExists bool
+	err := db.QueryRow(
+		"SELECT id, name, config_exists, executable_exists FROM routes WHERE id = $1 AND user_id = $2",
+		routeId,
+		user.UserId,
+	).Scan(&id, &name, &configExists, &executableExists)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	return &schema.Route{
+		Id:               id,
+		Name:             name,
+		ConfigExists:     configExists,
+		ExecutableExists: executableExists,
+	}, nil
+}
+
+func UpdateRoute(db *sql.DB, user schema.User, routeId int, route schema.RouteName) error {
+	_, err := db.Exec(
+		"UPDATE routes SET name = $1 WHERE id = $2 AND user_id = $3",
+		route.Name,
+		routeId,
+		user.UserId,
+	)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	return nil
+}
+
+func DeleteRoute(db *sql.DB, user schema.User, routeId int) error {
+	_, err := db.Exec(
+		"DELETE FROM routes WHERE id = $1 AND user_id = $2",
+		routeId,
+		user.UserId,
+	)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	return nil
 }
