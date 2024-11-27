@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"log"
 	"os"
 	"time"
@@ -12,11 +11,10 @@ type AuthConfig struct {
 	JWTExpires time.Duration
 }
 
-func AuthConfigFromEnv() (*AuthConfig, error) {
+func AuthConfigFromEnv() AuthConfig {
 	key := os.Getenv("AUTH_JWT_KEY")
 	if key == "" {
 		log.Fatal("AUTH_JWT_KEY is required")
-		return nil, errors.New("AUTH_JWT_KEY is required")
 	}
 	expires := os.Getenv("AUTH_JWT_EXPIRES")
 	if expires == "" {
@@ -25,11 +23,10 @@ func AuthConfigFromEnv() (*AuthConfig, error) {
 	expiresDuration, err := time.ParseDuration(expires)
 	if err != nil {
 		log.Fatal(err)
-		return nil, err
 	}
 
-	return &AuthConfig{
+	return AuthConfig{
 		JWTKey:     []byte(key),
 		JWTExpires: expiresDuration,
-	}, nil
+	}
 }

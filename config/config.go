@@ -19,24 +19,14 @@ type ExecutorConfig struct {
 	HotDuration time.Duration
 }
 
-func New() (*Config, error) {
+func New() *Config {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
-		return nil, err
 	}
-	authConfig, err := AuthConfigFromEnv()
-	if err != nil {
-		return nil, err
-	}
-	serverConfig, err := ServerConfigFromEnv()
-	if err != nil {
-		return nil, err
-	}
-	dbConfig, err := DbConfigFromEnv()
-	if err != nil {
-		return nil, err
-	}
+	authConfig := AuthConfigFromEnv()
+	serverConfig := ServerConfigFromEnv()
+	dbConfig := DbConfigFromEnv()
 
 	hot := os.Getenv("HOT_DURATION")
 	if hot == "" {
@@ -45,14 +35,13 @@ func New() (*Config, error) {
 	hotDuration, err := time.ParseDuration(hot)
 	if err != nil {
 		log.Fatal(err)
-		return nil, err
 	}
 	executorConfig := ExecutorConfig{HotDuration: hotDuration}
 
 	return &Config{
-		Auth:     *authConfig,
-		Server:   *serverConfig,
-		Db:       *dbConfig,
+		Auth:     authConfig,
+		Server:   serverConfig,
+		Db:       dbConfig,
 		Executor: executorConfig,
-	}, nil
+	}
 }

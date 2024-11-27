@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"log"
 	"os"
 )
@@ -14,20 +13,19 @@ type DbConfig struct {
 	Name     string
 }
 
-func DbConfigFromEnv() (*DbConfig, error) {
+func DbConfigFromEnv() DbConfig {
 	for _, envVar := range []string{"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME"} {
 		if os.Getenv(envVar) == "" {
 			log.Fatal(envVar + " is required")
-			return nil, errors.New(envVar + " is required")
 		}
 	}
-	return &DbConfig{
+	return DbConfig{
 		Host:     os.Getenv("DB_HOST"),
 		Port:     os.Getenv("DB_PORT"),
 		User:     os.Getenv("DB_USER"),
 		Password: os.Getenv("DB_PASSWORD"),
 		Name:     os.Getenv("DB_NAME"),
-	}, nil
+	}
 }
 
 func (c DbConfig) ConnectionString() string {
