@@ -7,7 +7,7 @@ type ServerConfig struct {
 	Port string
 }
 
-func ServerConfigFromEnv() (*ServerConfig, error) {
+func ServerConfigFromEnv() ServerConfig {
 	host := os.Getenv("SERVER_HOST")
 	if host == "" {
 		host = "localhost"
@@ -16,10 +16,10 @@ func ServerConfigFromEnv() (*ServerConfig, error) {
 	if port == "" {
 		port = "8080"
 	}
-	return &ServerConfig{
+	return ServerConfig{
 		Host: host,
 		Port: port,
-	}, nil
+	}
 }
 
 func (c ServerConfig) ConnectionString() string {

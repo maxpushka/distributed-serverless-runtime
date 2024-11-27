@@ -2,7 +2,7 @@ package config
 
 import (
 	"log"
-	
+
 	"github.com/joho/godotenv"
 )
 
@@ -12,27 +12,17 @@ type Config struct {
 	Db     DbConfig
 }
 
-func New() (*Config, error) {
+func New() *Config {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
-		return nil, err
 	}
-	authConfig, err := AuthConfigFromEnv()
-	if err != nil {
-		return nil, err
-	}
-	serverConfig, err := ServerConfigFromEnv()
-	if err != nil {
-		return nil, err
-	}
-	dbConfig, err := DbConfigFromEnv()
-	if err != nil {
-		return nil, err
-	}
+	authConfig := AuthConfigFromEnv()
+	serverConfig := ServerConfigFromEnv()
+	dbConfig := DbConfigFromEnv()
 	return &Config{
-		Auth:   *authConfig,
-		Server: *serverConfig,
-		Db:     *dbConfig,
-	}, nil
+		Auth:   authConfig,
+		Server: serverConfig,
+		Db:     dbConfig,
+	}
 }

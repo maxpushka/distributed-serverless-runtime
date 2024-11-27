@@ -39,7 +39,7 @@ func Middleware(conf *config.Config) func(handler http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), "username", claims.Username)
+			ctx := context.WithValue(r.Context(), "user", claims.ToUser())
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

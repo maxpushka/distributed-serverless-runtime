@@ -4,12 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"serverless/router/database/crud"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 
 	"serverless/config"
-	"serverless/router/database"
 	"serverless/router/schema"
 )
 
@@ -34,7 +34,7 @@ func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Reque
 	}
 
 	// Check user credentials
-	err = database.GetUserPassword(db, creds)
+	user, err := crud.GetUser(db, creds)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		encoder.Encode(schema.Response{Error: "Invalid credentials"})
@@ -44,13 +44,10 @@ func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Reque
 	// Create JWT token
 	issuedAt := time.Now()
 	expirationTime := issuedAt.Add(conf.Auth.JWTExpires)
-	claims := &schema.Claims{
-		Username: creds.Username,
-		StandardClaims: jwt.StandardClaims{
-			IssuedAt:  issuedAt.Unix(),
-			ExpiresAt: expirationTime.Unix(),
-		},
-	}
+	claims := user.ToClaims(jwt.StandardClaims{
+		ExpiresAt: expirationTime.Unix(),
+		IssuedAt:  issuedAt.Unix(),
+	})
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString(conf.Auth.JWTKey)
@@ -84,7 +81,7 @@ func Register(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Re
 	}
 
 	// Save user to the database
-	err = database.SaveUser(db, creds)
+	err = crud.SaveUser(db, creds)
 	if err != nil {
 		w.WriteHeader(http.StatusConflict)
 		encoder.Encode(schema.Response{Error: "User with this username already exists"})
