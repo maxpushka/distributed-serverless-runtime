@@ -9,7 +9,7 @@ import (
 func SaveRoute(db *sql.DB, user schema.User, route schema.RouteName) (*schema.Route, error) {
 	var id int
 	err := db.QueryRow(
-		"INSERT INTO routes (user_id, route) VALUES ($1, $2) RETURNING id;",
+		"INSERT INTO routes (user_id, name) VALUES ($1, $2) RETURNING id;",
 		user.UserId,
 		route.Name,
 	).Scan(&id)
