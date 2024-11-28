@@ -14,7 +14,7 @@ import (
 	"serverless/router/schema"
 )
 
-func Middleware(db *sql.DB, conf *config.Config) func(handler http.Handler) http.Handler {
+func Middleware(db *sql.DB, conf *config.AuthConfig) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
@@ -32,7 +32,7 @@ func Middleware(db *sql.DB, conf *config.Config) func(handler http.Handler) http
 			claims := &schema.Claims{}
 
 			token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-				return conf.Auth.JWTKey, nil
+				return conf.JWTKey, nil
 			})
 
 			if err != nil || !token.Valid {

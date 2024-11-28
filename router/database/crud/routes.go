@@ -100,3 +100,29 @@ func DeleteRoute(db *sql.DB, user schema.User, routeId int) error {
 	}
 	return nil
 }
+
+func SetConfig(db *sql.DB, user schema.User, routeId int) error {
+	_, err := db.Exec(
+		"UPDATE routes SET config_exists = true WHERE id = $1 AND user_id = $2",
+		routeId,
+		user.UserId,
+	)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	return nil
+}
+
+func SetExecutable(db *sql.DB, user schema.User, routeId int) error {
+	_, err := db.Exec(
+		"UPDATE routes SET executable_exists = true WHERE id = $1 AND user_id = $2",
+		routeId,
+		user.UserId,
+	)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	return nil
+}

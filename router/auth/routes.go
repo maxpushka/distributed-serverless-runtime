@@ -13,7 +13,7 @@ import (
 	"serverless/router/schema"
 )
 
-func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Request) {
+func Login(db *sql.DB, conf *config.AuthConfig, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 
@@ -49,14 +49,14 @@ func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Reque
 		return
 	}
 	issuedAt := time.Now()
-	expirationTime := issuedAt.Add(conf.Auth.JWTExpires)
+	expirationTime := issuedAt.Add(conf.JWTExpires)
 	claims := user.ToClaims(jwt.StandardClaims{
 		ExpiresAt: expirationTime.Unix(),
 		IssuedAt:  issuedAt.Unix(),
 	})
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, err := token.SignedString(conf.Auth.JWTKey)
+	tokenStr, err := token.SignedString(conf.JWTKey)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		encoder.Encode(schema.Response{Error: "Failed to create token"})
@@ -67,7 +67,7 @@ func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(schema.Response{Message: "Login successful", Data: schema.TokenData{Token: tokenStr}})
 }
 
-func Register(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Request) {
+func Register(db *sql.DB, conf *config.AuthConfig, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 
