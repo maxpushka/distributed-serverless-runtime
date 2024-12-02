@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"serverless/router/database/crud"
 	"strings"
 
 	"github.com/golang-jwt/jwt"
 
 	"serverless/config"
+	"serverless/router/database/crud"
 	"serverless/router/schema"
 )
 

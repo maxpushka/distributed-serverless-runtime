@@ -2,8 +2,10 @@ package crud
 
 import (
 	"database/sql"
-	"golang.org/x/crypto/bcrypt"
 	"log"
+
+	"golang.org/x/crypto/bcrypt"
+
 	"serverless/router/schema"
 )
 
