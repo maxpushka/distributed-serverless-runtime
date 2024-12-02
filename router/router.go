@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
 	"serverless/router/routes_management"
 
 	"github.com/gorilla/mux"
@@ -13,8 +14,8 @@ import (
 	"serverless/router/database"
 )
 
-func Start(conf *config.Config) {
-	db := database.Connect(&conf.Db)
+func Start(conf config.Config) {
+	db := database.Connect(&conf.Database)
 	database.Initialize(db)
 
 	router := mux.NewRouter()

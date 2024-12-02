@@ -13,7 +13,7 @@ import (
 	"serverless/router/schema"
 )
 
-func Login(db *sql.DB, conf *config.AuthConfig, w http.ResponseWriter, r *http.Request) {
+func Login(db *sql.DB, conf *config.Auth, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 
@@ -67,7 +67,7 @@ func Login(db *sql.DB, conf *config.AuthConfig, w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(schema.Response{Message: "Login successful", Data: schema.TokenData{Token: tokenStr}})
 }
 
-func Register(db *sql.DB, conf *config.AuthConfig, w http.ResponseWriter, r *http.Request) {
+func Register(db *sql.DB, conf *config.Auth, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 

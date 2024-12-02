@@ -9,7 +9,7 @@ import (
 	"serverless/router/schema"
 )
 
-func SetConfig(db *sql.DB, conf *config.ServerConfig, w http.ResponseWriter, r *http.Request) {
+func SetConfig(db *sql.DB, conf *config.Server, w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(schema.User)
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
@@ -46,7 +46,7 @@ func SetConfig(db *sql.DB, conf *config.ServerConfig, w http.ResponseWriter, r *
 	encoder.Encode(schema.Response{Message: "Config set"})
 }
 
-func GetConfig(db *sql.DB, conf *config.ServerConfig, w http.ResponseWriter, r *http.Request) {
+func GetConfig(db *sql.DB, conf *config.Server, w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(schema.User)
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)

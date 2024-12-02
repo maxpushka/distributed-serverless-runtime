@@ -14,7 +14,7 @@ import (
 	"serverless/router/schema"
 )
 
-func Middleware(db *sql.DB, conf *config.AuthConfig) func(handler http.Handler) http.Handler {
+func Middleware(db *sql.DB, conf *config.Auth) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")

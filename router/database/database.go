@@ -9,7 +9,7 @@ import (
 	"serverless/config"
 )
 
-func Connect(conf *config.DbConfig) *sql.DB {
+func Connect(conf *config.Database) *sql.DB {
 	db, errOpen := sql.Open("postgres", conf.ConnectionString())
 	if errOpen != nil {
 		log.Fatal(errOpen)

@@ -10,7 +10,7 @@ import (
 	"serverless/router/schema"
 )
 
-func SetExecutable(db *sql.DB, conf *config.ServerConfig, w http.ResponseWriter, r *http.Request) {
+func SetExecutable(db *sql.DB, conf *config.Server, w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(schema.User)
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
@@ -47,7 +47,7 @@ func SetExecutable(db *sql.DB, conf *config.ServerConfig, w http.ResponseWriter,
 	encoder.Encode(schema.Response{Message: "Executable set"})
 }
 
-func GetExecutable(db *sql.DB, conf *config.ServerConfig, w http.ResponseWriter, r *http.Request) {
+func GetExecutable(db *sql.DB, conf *config.Server, w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(schema.User)
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)

@@ -6,6 +6,9 @@ import (
 )
 
 func main() {
-	conf := config.New()
+	conf, err := config.New()
+	if err != nil {
+		panic(err)
+	}
 	router.Start(conf)
 }
