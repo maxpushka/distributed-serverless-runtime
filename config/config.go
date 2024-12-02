@@ -9,37 +9,24 @@ import (
 )
 
 type Config struct {
-	// Auth Config
-	AuthJWTKey     []byte
-	AuthJWTExpires time.Duration
-	// Server Config
-	ServerPort string
-	// HotDuration specifies the duration
-	// for which a runner is kept hot after loading a script.
-	HotDuration time.Duration
-	// DB Config
-	dbHost string
-	dbPort string
-	dbUser string
-	dbPass string
-	dbName string
+	Auth     AuthConfig
+	Server   ServerConfig
+	Db       DbConfig
+	Executor ExecutorConfig
 }
 
-func New() (*Config, error) {
+type ExecutorConfig struct {
+	HotDuration time.Duration
+}
+
+func New() *Config {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
-		return nil, err
 	}
-	expires := os.Getenv("AUTH_JWT_EXPIRES")
-	if expires == "" {
-		expires = "24h"
-	}
-	expiresDuration, err := time.ParseDuration(expires)
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
+	authConfig := AuthConfigFromEnv()
+	serverConfig := ServerConfigFromEnv()
+	dbConfig := DbConfigFromEnv()
 
 	hot := os.Getenv("HOT_DURATION")
 	if hot == "" {
@@ -48,22 +35,13 @@ func New() (*Config, error) {
 	hotDuration, err := time.ParseDuration(hot)
 	if err != nil {
 		log.Fatal(err)
-		return nil, err
 	}
+	executorConfig := ExecutorConfig{HotDuration: hotDuration}
 
 	return &Config{
-		AuthJWTKey:     []byte(os.Getenv("AUTH_JWT_KEY")),
-		AuthJWTExpires: expiresDuration,
-		ServerPort:     os.Getenv("SERVER_PORT"),
-		HotDuration:    hotDuration,
-		dbHost:         os.Getenv("DB_HOST"),
-		dbPort:         os.Getenv("DB_PORT"),
-		dbUser:         os.Getenv("DB_USER"),
-		dbPass:         os.Getenv("DB_PASSWORD"),
-		dbName:         os.Getenv("DB_NAME"),
-	}, nil
-}
-
-func (c Config) DbUrl() string {
-	return "host=" + c.dbHost + " port=" + c.dbPort + " user=" + c.dbUser + " password=" + c.dbPass + " dbname=" + c.dbName + " sslmode=disable"
+		Auth:     authConfig,
+		Server:   serverConfig,
+		Db:       dbConfig,
+		Executor: executorConfig,
+	}
 }

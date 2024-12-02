@@ -2,15 +2,19 @@ package auth
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
-	"github.com/golang-jwt/jwt"
 	"net/http"
+	"serverless/router/database/crud"
+	"strings"
+
+	"github.com/golang-jwt/jwt"
+
 	"serverless/config"
 	"serverless/router/schema"
-	"strings"
 )
 
-func Middleware(conf *config.Config) func(handler http.Handler) http.Handler {
+func Middleware(db *sql.DB, conf *config.AuthConfig) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
@@ -28,7 +32,7 @@ func Middleware(conf *config.Config) func(handler http.Handler) http.Handler {
 			claims := &schema.Claims{}
 
 			token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-				return conf.AuthJWTKey, nil
+				return conf.JWTKey, nil
 			})
 
 			if err != nil || !token.Valid {
@@ -37,7 +41,15 @@ func Middleware(conf *config.Config) func(handler http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), "username", claims.Username)
+			user := claims.ToUser()
+			_, err = crud.GetUser(db, schema.CredentialsFromUser(user))
+			if err != nil {
+				w.WriteHeader(http.StatusUnauthorized)
+				encoder.Encode(schema.Response{Error: "Invalid token"})
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), "user", user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

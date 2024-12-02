@@ -1,55 +1,73 @@
 package router
 
 import (
-	//"context"
-	//"database/sql"
-	//"encoding/json"
 	"fmt"
-	//"io"
 	"log"
 	"net/http"
-	//"os"
-	"serverless/router/database"
-	//"strings"
-	//"time"
+	"serverless/router/routes_management"
 
 	"github.com/gorilla/mux"
 
 	"serverless/config"
 	"serverless/router/auth"
+	"serverless/router/database"
 )
 
-func Start(conf *config.Config) error {
-	db, err := database.Connect(conf)
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
+func Start(conf *config.Config) {
+	db := database.Connect(&conf.Db)
+	database.Initialize(db)
 
-	err = database.Initialize(db)
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
-
-	r := mux.NewRouter()
-	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		auth.Login(db, conf, w, r)
+	router := mux.NewRouter()
+	router.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		auth.Login(db, &conf.Auth, w, r)
 	}).Methods("POST")
-	r.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
-		auth.Register(db, conf, w, r)
+	router.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
+		auth.Register(db, &conf.Auth, w, r)
 	}).Methods("POST")
 
-	api := r.PathPrefix("/api").Subrouter()
-	api.Use(auth.Middleware(conf))
+	api := router.PathPrefix("/api").Subrouter()
+	api.Use(auth.Middleware(db, &conf.Auth))
 
-	fmt.Printf("Starting server on port %s\n", conf.ServerPort)
-	err = http.ListenAndServe(":"+conf.ServerPort, r)
+	api.HandleFunc("/routes", func(w http.ResponseWriter, r *http.Request) {
+		routes_management.CreateRoute(db, w, r)
+	}).Methods("POST")
+	api.HandleFunc("/routes", func(w http.ResponseWriter, r *http.Request) {
+		routes_management.ListRoutes(db, w, r)
+	}).Methods("GET")
+
+	api.HandleFunc("/routes/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
+		routes_management.GetRoute(db, w, r)
+	}).Methods("GET")
+	api.HandleFunc("/routes/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
+		routes_management.UpdateRoute(db, w, r)
+	}).Methods("PUT")
+	api.HandleFunc("/routes/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
+		routes_management.DeleteRoute(db, w, r)
+	}).Methods("DELETE")
+
+	api.HandleFunc("/routes/{id:[0-9]+}/config", func(w http.ResponseWriter, r *http.Request) {
+		routes_management.SetConfig(db, &conf.Server, w, r)
+	}).Methods("POST")
+	api.HandleFunc("/routes/{id:[0-9]+}/config", func(w http.ResponseWriter, r *http.Request) {
+		routes_management.GetConfig(db, &conf.Server, w, r)
+	}).Methods("GET")
+
+	api.HandleFunc("/routes/{id:[0-9]+}/executable", func(w http.ResponseWriter, r *http.Request) {
+		routes_management.SetExecutable(db, &conf.Server, w, r)
+	}).Methods("POST")
+	api.HandleFunc("/routes/{id:[0-9]+}/executable", func(w http.ResponseWriter, r *http.Request) {
+		routes_management.GetExecutable(db, &conf.Server, w, r)
+	}).Methods("GET")
+
+	api.HandleFunc("/routes/{id:[0-9]+}/execute", func(w http.ResponseWriter, r *http.Request) {
+		routes_management.ExecuteRoute(db, w, r)
+	}).Methods("POST")
+
+	fmt.Printf("Starting server on %s\n", conf.Server.ConnectionString())
+	err := http.ListenAndServe(conf.Server.ConnectionString(), router)
 	if err != nil {
 		log.Fatal(err)
-		return err
 	}
 
-	err = database.Disconnect(db)
-	return err
+	database.Disconnect(db)
 }

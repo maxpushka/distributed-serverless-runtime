@@ -3,15 +3,17 @@ package auth
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/golang-jwt/jwt"
 	"net/http"
-	"serverless/config"
-	"serverless/router/database"
-	"serverless/router/schema"
+	"serverless/router/database/crud"
 	"time"
+
+	"github.com/golang-jwt/jwt"
+
+	"serverless/config"
+	"serverless/router/schema"
 )
 
-func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Request) {
+func Login(db *sql.DB, conf *config.AuthConfig, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 
@@ -32,26 +34,29 @@ func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Reque
 	}
 
 	// Check user credentials
-	dbPassword, err := database.GetUserPassword(db, creds)
-	if err != nil || dbPassword != creds.Password {
+	passwordIsValid := crud.CheckUserPassword(db, creds)
+	if !passwordIsValid {
 		w.WriteHeader(http.StatusUnauthorized)
 		encoder.Encode(schema.Response{Error: "Invalid credentials"})
 		return
 	}
 
 	// Create JWT token
-	issuedAt := time.Now()
-	expirationTime := issuedAt.Add(conf.AuthJWTExpires)
-	claims := &schema.Claims{
-		Username: creds.Username,
-		StandardClaims: jwt.StandardClaims{
-			IssuedAt:  issuedAt.Unix(),
-			ExpiresAt: expirationTime.Unix(),
-		},
+	user, err := crud.GetUser(db, creds)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		encoder.Encode(schema.Response{Error: "Failed to fetch user"})
+		return
 	}
+	issuedAt := time.Now()
+	expirationTime := issuedAt.Add(conf.JWTExpires)
+	claims := user.ToClaims(jwt.StandardClaims{
+		ExpiresAt: expirationTime.Unix(),
+		IssuedAt:  issuedAt.Unix(),
+	})
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, err := token.SignedString(conf.AuthJWTKey)
+	tokenStr, err := token.SignedString(conf.JWTKey)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		encoder.Encode(schema.Response{Error: "Failed to create token"})
@@ -62,7 +67,7 @@ func Login(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(schema.Response{Message: "Login successful", Data: schema.TokenData{Token: tokenStr}})
 }
 
-func Register(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Request) {
+func Register(db *sql.DB, conf *config.AuthConfig, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 
@@ -82,7 +87,7 @@ func Register(db *sql.DB, conf *config.Config, w http.ResponseWriter, r *http.Re
 	}
 
 	// Save user to the database
-	err = database.SaveUser(db, creds)
+	err = crud.SaveUser(db, creds)
 	if err != nil {
 		w.WriteHeader(http.StatusConflict)
 		encoder.Encode(schema.Response{Error: "User with this username already exists"})
