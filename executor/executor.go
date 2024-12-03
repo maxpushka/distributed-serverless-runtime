@@ -30,7 +30,11 @@ type GoExecutor struct {
 }
 
 type Runner[Runtime any] struct {
-	Mu       sync.RWMutex
+	Mu sync.RWMutex
+	// Checksum of the script source code.
+	// Used to determine whether
+	// the loaded script is up to date.
 	Checksum string
-	Runtime  Runtime
+	// Runtime for the script.
+	Runtime Runtime
 }

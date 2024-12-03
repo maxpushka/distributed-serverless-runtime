@@ -64,15 +64,10 @@ func (exec *Executor) Execute(id string, cfg map[string]string, req executor.Req
 		return executor.Response{}, err
 	}
 
-	// Convert output to executor.Response
+	// Convert output object into a response type
 	var response executor.Response
-	outputMap := outputObject.Export()
-	outputBytes, err := json.Marshal(outputMap)
-	if err != nil {
-		return executor.Response{}, err
-	}
-	if err := json.Unmarshal(outputBytes, &response); err != nil {
-		return executor.Response{}, fmt.Errorf("failed to unmarshal handler response: %w", err)
+	if err := runner.Runtime.ExportTo(outputObject, &response); err != nil {
+		return executor.Response{}, fmt.Errorf("failed to export handler response: %w", err)
 	}
 
 	return response, nil
