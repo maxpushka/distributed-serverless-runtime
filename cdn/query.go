@@ -33,10 +33,7 @@ func (cdn *QueryCDN) ReadFile(id string) (content []byte, checksum string, err e
 		return nil, "", err
 	}
 
-	checksum, err = utils.ComputeChecksum(content)
-	if err != nil {
-		return nil, "", err
-	}
+	checksum = utils.ComputeChecksum(content)
 
 	return content, checksum, nil
 }
@@ -52,10 +49,7 @@ func (cdn *QueryCDN) Checksum(id string) (string, error) {
 		return "", err
 	}
 
-	checksum, err := utils.ComputeChecksum(content)
-	if err != nil {
-		return "", err
-	}
+	checksum := utils.ComputeChecksum(content)
 
 	return checksum, nil
 }

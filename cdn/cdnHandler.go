@@ -29,10 +29,7 @@ type CDNHandler struct {
 }
 
 func (handler *CDNHandler) Upload(id string, file []byte) error {
-	checksum, err := utils.ComputeChecksum(file)
-	if err != nil {
-		return err
-	}
+	checksum := utils.ComputeChecksum(file)
 
 	message := CDNMessage{
 		FileId:   id,
