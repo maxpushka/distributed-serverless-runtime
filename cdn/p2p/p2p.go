@@ -1,87 +1,31 @@
 package p2p
 
 import (
-	"context"
-	"fmt"
-	dht "github.com/libp2p/go-libp2p-kad-dht"
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/multiformats/go-multiaddr"
-
-	libp2p "github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
-	peerstore "github.com/libp2p/go-libp2p/core/peerstore"
+	"github.com/libp2p/go-libp2p/core/peer"
+
+	"github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 )
 
-// Node represents a libp2p node in the network.
-type Node struct {
-	Host      host.Host
-	PeerStore peerstore.Peerstore
-	Context   context.Context
-	dht       *dht.IpfsDHT
-	// Add more fields as needed.
+type discoveryNotifee struct {
+	PeerChan chan peer.AddrInfo
 }
 
-// NewNode initializes a new libp2p node.
-func NewNode(ctx context.Context) (*Node, error) {
-	// Initialize the libp2p host and other configurations.
-	h, err := NewHost(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Initialize the DHT for the node.
-	dht, err := NewDHT(ctx, h, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create a new Node instance.
-	node := &Node{
-		Host:      h,
-		PeerStore: h.Peerstore(),
-		Context:   ctx,
-		dht:       dht,
-	}
-
-	return node, nil
+// interface to be called when new  peer is found
+func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
+	n.PeerChan <- pi
 }
 
-func NewHost(ctx context.Context) (host.Host, error) {
-	// Generate a key pair and create a new host
-	privateKey, _, err := crypto.GenerateKeyPair(crypto.RSA, 2048)
-	if err != nil {
-		return nil, err
-	}
-	h, err := libp2p.New(libp2p.Identity(privateKey))
-	if err != nil {
-		return nil, err
-	}
-	return h, nil
-}
+// Initialize the MDNS service
+func initMDNS(peerhost host.Host, rendezvous string) chan peer.AddrInfo {
+	// register with service so that we get notified about peer discovery
+	n := &discoveryNotifee{}
+	n.PeerChan = make(chan peer.AddrInfo)
 
-func NewDHT(ctx context.Context, host host.Host, bootstrapPeers []multiaddr.Multiaddr) (*dht.IpfsDHT, error) {
-	options := []dht.Option{}
-	if len(bootstrapPeers) == 0 {
-		options = append(options, dht.Mode(dht.ModeServer))
+	// An hour might be a long long period in practical applications. But this is fine for us
+	ser := mdns.NewMdnsService(peerhost, rendezvous, n)
+	if err := ser.Start(); err != nil {
+		panic(err)
 	}
-
-	kdht, err := dht.New(ctx, host, options...)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = kdht.Bootstrap(ctx); err != nil {
-		return nil, err
-	}
-
-	// Connect to bootstrap peers
-	for _, addr := range bootstrapPeers {
-		peerInfo, _ := peer.AddrInfoFromP2pAddr(addr)
-		if err := host.Connect(ctx, *peerInfo); err != nil {
-			fmt.Println("Failed to connect to bootstrap peer:", err)
-		}
-	}
-
-	return kdht, nil
+	return n.PeerChan
 }

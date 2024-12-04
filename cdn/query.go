@@ -12,37 +12,47 @@ type Query interface {
 	// ReadFile retrieves  file associated with a given ID.
 	ReadFile(id string) (file io.Reader, checksum string, err error)
 
-	// Checksum retrieves a single checksum
+	// Checksum retrieves a single Checksum
 	// for the file associated with the given ID.
-	// It computes individual checksum and hashes it
+	// It computes individual Checksum and hashes it
 	Checksum(id string) (string, error)
 }
 
 type QueryCDN struct {
-	storage storage.StorageCDN
+	Storage *storage.StorageCDN
 }
 
-func (cdn *QueryCDN) ReadFile(id string) (file io.Reader, checksum string, err error) {
-	file, err = cdn.storage.RetrieveFile(id)
+func (cdn *QueryCDN) ReadFile(id string) (content []byte, checksum string, err error) {
+	file, err := cdn.Storage.RetrieveFile(id)
 	if err != nil {
 		return nil, "", err
 	}
 
-	checksum, err = utils.ComputeChecksum(file)
+	content, err = io.ReadAll(file)
 	if err != nil {
 		return nil, "", err
 	}
 
-	return file, checksum, nil
+	checksum, err = utils.ComputeChecksum(content)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return content, checksum, nil
 }
 
 func (cdn *QueryCDN) Checksum(id string) (string, error) {
-	file, err := cdn.storage.RetrieveFile(id)
+	file, err := cdn.Storage.RetrieveFile(id)
 	if err != nil {
 		return "", err
 	}
 
-	checksum, err := utils.ComputeChecksum(file)
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return "", err
+	}
+
+	checksum, err := utils.ComputeChecksum(content)
 	if err != nil {
 		return "", err
 	}
