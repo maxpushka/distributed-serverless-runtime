@@ -25,5 +25,4 @@ go.work.sum
 .idea
 
 # Project executable files and configs
-storage
 test_files
