@@ -6,9 +6,9 @@ import (
 )
 
 // ComputeChecksum computes a combined checksum for multiple files.
-func ComputeChecksum(file []byte) (string, error) {
+func ComputeChecksum(file []byte) string {
 	hash := sha256.New()
 	hash.Write(file)
 
-	return hex.EncodeToString(hash.Sum(nil)), nil
+	return hex.EncodeToString(hash.Sum(nil))
 }
