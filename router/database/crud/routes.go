@@ -23,7 +23,7 @@ func SaveRoute(db *sql.DB, user schema.User, route schema.RouteName) (*schema.Ro
 
 func GetRoutes(db *sql.DB, user schema.User) ([]schema.Route, error) {
 	rows, err := db.Query(
-		"SELECT id, name, config_exists, executable_exists FROM routes WHERE user_id = $1",
+		"SELECT id, name, executable_exists FROM routes WHERE user_id = $1",
 		user.UserId,
 	)
 	if err != nil {
@@ -36,9 +36,8 @@ func GetRoutes(db *sql.DB, user schema.User) ([]schema.Route, error) {
 	for rows.Next() {
 		var id int
 		var name string
-		var configExists bool
 		var executableExists bool
-		err := rows.Scan(&id, &name, &configExists, &executableExists)
+		err := rows.Scan(&id, &name, &executableExists)
 		if err != nil {
 			log.Print(err)
 			return nil, err
@@ -46,7 +45,6 @@ func GetRoutes(db *sql.DB, user schema.User) ([]schema.Route, error) {
 		routes = append(routes, schema.Route{
 			Id:               id,
 			Name:             name,
-			ConfigExists:     configExists,
 			ExecutableExists: executableExists,
 		})
 	}
@@ -56,13 +54,12 @@ func GetRoutes(db *sql.DB, user schema.User) ([]schema.Route, error) {
 func GetRoute(db *sql.DB, user schema.User, routeId int) (*schema.Route, error) {
 	var id int
 	var name string
-	var configExists bool
 	var executableExists bool
 	err := db.QueryRow(
-		"SELECT id, name, config_exists, executable_exists FROM routes WHERE id = $1 AND user_id = $2",
+		"SELECT id, name, executable_exists FROM routes WHERE id = $1 AND user_id = $2",
 		routeId,
 		user.UserId,
-	).Scan(&id, &name, &configExists, &executableExists)
+	).Scan(&id, &name, &executableExists)
 	if err != nil {
 		log.Print(err)
 		return nil, err
@@ -70,7 +67,6 @@ func GetRoute(db *sql.DB, user schema.User, routeId int) (*schema.Route, error) 
 	return &schema.Route{
 		Id:               id,
 		Name:             name,
-		ConfigExists:     configExists,
 		ExecutableExists: executableExists,
 	}, nil
 }
@@ -92,19 +88,6 @@ func UpdateRoute(db *sql.DB, user schema.User, routeId int, route schema.RouteNa
 func DeleteRoute(db *sql.DB, user schema.User, routeId int) error {
 	_, err := db.Exec(
 		"DELETE FROM routes WHERE id = $1 AND user_id = $2",
-		routeId,
-		user.UserId,
-	)
-	if err != nil {
-		log.Print(err)
-		return err
-	}
-	return nil
-}
-
-func SetConfig(db *sql.DB, user schema.User, routeId int) error {
-	_, err := db.Exec(
-		"UPDATE routes SET config_exists = true WHERE id = $1 AND user_id = $2",
 		routeId,
 		user.UserId,
 	)

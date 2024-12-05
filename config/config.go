@@ -10,10 +10,10 @@ import (
 )
 
 type Config struct {
-	Auth     Auth     `env-prefix:"AUTH"`
-	Server   Server   `env-prefix:"SERVER"`
-	Database Database `env-prefix:"DATABASE"`
-	Executor Executor `env-prefix:"EXECUTOR"`
+	Auth     Auth     `env-prefix:"AUTH_"`
+	Server   Server   `env-prefix:"SERVER_"`
+	Database Database `env-prefix:"DB_"`
+	Executor Executor `env-prefix:"EXECUTOR_"`
 }
 
 type Auth struct {

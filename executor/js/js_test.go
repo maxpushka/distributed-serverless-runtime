@@ -3,6 +3,7 @@ package js_test
 import (
 	"io"
 	"reflect"
+	"serverless/config"
 	"strings"
 	"testing"
 	"time"
@@ -86,7 +87,7 @@ func TestExecutor_Execute(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			exec := js.NewExecutor(30*time.Minute, &tt.source)
+			exec := js.NewExecutor(config.Executor{HotDuration: 30 * time.Minute}, &tt.source)
 			got, err := exec.Execute(tt.args.id, tt.args.cfg, tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Execute() error = %v, wantErr %v", err, tt.wantErr)

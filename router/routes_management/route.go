@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"serverless/executor"
+	"serverless/executor/js"
 
 	"serverless/router/database/crud"
 	"serverless/router/schema"
@@ -91,16 +93,19 @@ func DeleteRoute(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	encoder.Encode(schema.Response{Message: "Route deleted"})
 }
 
-func ExecuteRoute(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+func ExecuteRoute(db *sql.DB, executorJs *js.Executor, w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(schema.User)
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 
-	_, id, err := ParseRouteID(r)
+	idStr, id, err := ParseRouteID(r)
 	if err != nil {
 		http.Error(w, "Invalid route ID", http.StatusBadRequest)
 		return
 	}
+
+	var params schema.ExecuteParams
+	err = json.NewDecoder(r.Body).Decode(&params)
 
 	route, err := crud.GetRoute(db, user, id)
 	if err != nil {
@@ -109,13 +114,25 @@ func ExecuteRoute(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !(route.ExecutableExists && route.ConfigExists) {
+	if !(route.ExecutableExists) {
 		w.WriteHeader(http.StatusBadRequest)
 		encoder.Encode(schema.Response{Error: "Route not executable"})
 		return
 	}
 
-	// TODO(Vlad): Execute route here
+	request := executor.Request{
+		Method:  "POST",
+		URL:     idStr,
+		Headers: nil,
+		Body:    params.RequestBody,
+	}
+
+	response, err := executorJs.Execute(idStr, params.RouteConfig, request)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		encoder.Encode(schema.Response{Error: "Error executing route"})
+		return
+	}
 	w.WriteHeader(http.StatusOK)
-	encoder.Encode(schema.Response{Message: "Route executed"})
+	encoder.Encode(schema.Response{Message: "Route executed", Data: response})
 }

@@ -56,7 +56,7 @@ func Login(db *sql.DB, conf *config.Auth, w http.ResponseWriter, r *http.Request
 	})
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, err := token.SignedString(conf.JWTKey)
+	tokenStr, err := token.SignedString([]byte(conf.JWTKey))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		encoder.Encode(schema.Response{Error: "Failed to create token"})

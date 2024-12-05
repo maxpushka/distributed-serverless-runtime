@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"serverless/cdn"
+	"serverless/executor/js"
 
 	"serverless/router/routes_management"
 
@@ -14,7 +16,7 @@ import (
 	"serverless/router/database"
 )
 
-func Start(conf config.Config) {
+func Start(conf config.Config, command *cdn.CommandCDN, executor *js.Executor) {
 	db := database.Connect(&conf.Database)
 	database.Initialize(db)
 
@@ -46,22 +48,12 @@ func Start(conf config.Config) {
 		routes_management.DeleteRoute(db, w, r)
 	}).Methods("DELETE")
 
-	api.HandleFunc("/routes/{id:[0-9]+}/config", func(w http.ResponseWriter, r *http.Request) {
-		routes_management.SetConfig(db, &conf.Server, w, r)
-	}).Methods("POST")
-	api.HandleFunc("/routes/{id:[0-9]+}/config", func(w http.ResponseWriter, r *http.Request) {
-		routes_management.GetConfig(db, &conf.Server, w, r)
-	}).Methods("GET")
-
 	api.HandleFunc("/routes/{id:[0-9]+}/executable", func(w http.ResponseWriter, r *http.Request) {
-		routes_management.SetExecutable(db, &conf.Server, w, r)
+		routes_management.SetExecutable(db, &conf.Server, command, w, r)
 	}).Methods("POST")
-	api.HandleFunc("/routes/{id:[0-9]+}/executable", func(w http.ResponseWriter, r *http.Request) {
-		routes_management.GetExecutable(db, &conf.Server, w, r)
-	}).Methods("GET")
 
 	api.HandleFunc("/routes/{id:[0-9]+}/execute", func(w http.ResponseWriter, r *http.Request) {
-		routes_management.ExecuteRoute(db, w, r)
+		routes_management.ExecuteRoute(db, executor, w, r)
 	}).Methods("POST")
 
 	fmt.Printf("Starting server on %s\n", conf.Server.ConnectionString())

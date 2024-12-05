@@ -1,0 +1,11 @@
+function handle(req, cfg) {
+    return {
+        status_code: 200,
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            message: "Hello, " + cfg["adjective"] + " " + req.body["name"] + "!",
+        }),
+    }
+}

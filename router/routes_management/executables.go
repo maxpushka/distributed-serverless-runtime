@@ -4,13 +4,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"serverless/cdn"
 
 	"serverless/config"
 	"serverless/router/database/crud"
 	"serverless/router/schema"
 )
 
-func SetExecutable(db *sql.DB, conf *config.Server, w http.ResponseWriter, r *http.Request) {
+func SetExecutable(db *sql.DB, conf *config.Server, command *cdn.CommandCDN, w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(schema.User)
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
@@ -22,14 +23,7 @@ func SetExecutable(db *sql.DB, conf *config.Server, w http.ResponseWriter, r *ht
 		return
 	}
 
-	baseDir, err := conf.ExecutableDir()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		encoder.Encode(schema.Response{Error: "Error getting executables directory"})
-		return
-	}
-
-	err = SaveFile(w, r, idStr, baseDir)
+	err = SaveFile(w, r, idStr, command)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		encoder.Encode(schema.Response{Error: "Error saving file"})
@@ -45,39 +39,4 @@ func SetExecutable(db *sql.DB, conf *config.Server, w http.ResponseWriter, r *ht
 
 	w.WriteHeader(http.StatusOK)
 	encoder.Encode(schema.Response{Message: "Executable set"})
-}
-
-func GetExecutable(db *sql.DB, conf *config.Server, w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value("user").(schema.User)
-	w.Header().Set("Content-Type", "application/json")
-	encoder := json.NewEncoder(w)
-
-	idStr, id, err := ParseRouteID(r)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		encoder.Encode(schema.Response{Error: "Invalid route ID"})
-		return
-	}
-
-	_, err = crud.GetRoute(db, user, id)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		encoder.Encode(schema.Response{Error: "Route not found"})
-		return
-	}
-
-	baseDir, err := conf.ExecutableDir()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		encoder.Encode(schema.Response{Error: "Error getting executable directory"})
-		return
-	}
-
-	filePath, err := FindFileByName(idStr, baseDir)
-	if err != nil {
-		http.Error(w, "File not found", http.StatusNotFound)
-		return
-	}
-
-	ServeFile(w, filePath)
 }

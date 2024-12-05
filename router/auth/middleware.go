@@ -32,7 +32,7 @@ func Middleware(db *sql.DB, conf *config.Auth) func(handler http.Handler) http.H
 			claims := &schema.Claims{}
 
 			token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-				return conf.JWTKey, nil
+				return []byte(conf.JWTKey), nil
 			})
 
 			if err != nil || !token.Valid {

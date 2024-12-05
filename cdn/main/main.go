@@ -5,9 +5,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
+
 	"serverless/cdn"
 	"serverless/cdn/storage"
-	"strings"
 )
 
 func main() {

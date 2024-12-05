@@ -16,7 +16,11 @@ func SaveUser(db *sql.DB, creds schema.Credentials) error {
 		return err
 	}
 	_, err = db.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", creds.Username, string(hashedPassword))
-	return err
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	return nil
 }
 
 func CheckUserPassword(db *sql.DB, creds schema.Credentials) bool {

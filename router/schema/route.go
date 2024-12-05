@@ -7,6 +7,5 @@ type RouteName struct {
 type Route struct {
 	Id               int    `json:"id"`
 	Name             string `json:"name"`
-	ConfigExists     bool   `json:"configExists"`
 	ExecutableExists bool   `json:"executableExists"`
 }

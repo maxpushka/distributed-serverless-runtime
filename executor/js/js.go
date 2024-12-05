@@ -3,10 +3,8 @@ package js
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"time"
-
 	"serverless/cdn"
+	"serverless/config"
 	"serverless/executor"
 
 	"github.com/dop251/goja"
@@ -14,12 +12,12 @@ import (
 )
 
 type Executor struct {
-	source  cdn.Query
+	source  cdn.QueryCDN
 	runners *ttlcache.Cache[string, *executor.Runner[*goja.Runtime]]
 }
 
-func NewExecutor(hot time.Duration, source cdn.Query) *Executor {
-	runtimes := ttlcache.New(ttlcache.WithTTL[string, *executor.Runner[*goja.Runtime]](hot))
+func NewExecutor(cfg config.Executor, source cdn.QueryCDN) *Executor {
+	runtimes := ttlcache.New(ttlcache.WithTTL[string, *executor.Runner[*goja.Runtime]](cfg.HotDuration))
 	go runtimes.Start() // starts automatic expired item deletion
 
 	return &Executor{
@@ -84,11 +82,7 @@ func (exec *Executor) setupRunner(runner *executor.Runner[*goja.Runtime], prevSu
 		return nil
 	}
 
-	reader, sum, err := exec.source.ReadFile(id)
-	if err != nil {
-		return err
-	}
-	source, err := io.ReadAll(reader)
+	source, sum, err := exec.source.ReadFile(id)
 	if err != nil {
 		return err
 	}

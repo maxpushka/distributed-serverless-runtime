@@ -1,0 +1,6 @@
+Endpoint,Total Requests,Successful Requests,Failed Requests,Error Rate (%),Median Response Time (ms),95th Percentile Response Time (ms)
+Create User,5000,3096,1904,38.08,5256.43,10431.10
+Login Admin,4999,1354,3645,72.91,542.20,1752.34
+Create Routes,5000,5000,0,0.00,1.38,5.36
+Get Routes,5000,5000,0,0.00,5.53,15.00
+Execute Route,5000,749,4251,85.02,0.79,0.97
